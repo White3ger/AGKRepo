@@ -296,6 +296,42 @@ int main( int argc, char* argv[] )
 	char szVisualStudio[1024]; sprintf(szVisualStudio, "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\devenv.exe");
 	char szJava[1024]; sprintf(szJava, "C:\\Program Files\\Java\\jdk-17\\bin\\java.exe");
 
+	if (GetPathExistsUTF8(szJarSigner) != 2)
+	{
+		char msg[1000]; sprintf(msg, "Failed to find: %s", szJarSigner);
+		Message(msg); //TODO: Try to find the jdk (maybe check JAVA_HOME?)
+	}
+
+	if (GetPathExistsUTF8(szJava) != 2)
+	{
+		char msg[1000]; sprintf(msg, "Failed to find: %s", szJava);
+		Message(msg); //TODO: Try to find the jdk (maybe check JAVA_HOME?)
+	}
+
+	if (GetPathExistsUTF8(szVisualStudio) != 2)
+	{
+		bool vsFound = false;
+		LPSTR pVsFolder = getenv("VSAPPIDDIR");
+		if (pVsFolder)
+		{
+			char szVisualStudioTemp[1024];
+			strcpy(szVisualStudioTemp, pVsFolder);
+			strcat(szVisualStudioTemp, "devenv.exe");
+
+			if (GetPathExistsUTF8(szVisualStudioTemp) == 2)
+			{
+				strcpy(szVisualStudio, szVisualStudioTemp);
+				vsFound = true;
+			}
+		}
+
+		if (!vsFound)
+		{
+			char msg[1000]; sprintf(msg, "Failed to find: %s", szVisualStudio);
+			Message(msg);
+		}
+	}
+	
 	// Android Studio files in AppData
 	char szAPKSigner[1024]; strcpy(szAPKSigner, "");
 	char szZipAlign[1024]; strcpy(szZipAlign, "");
@@ -306,6 +342,30 @@ int main( int argc, char* argv[] )
 		sprintf(szAPKSigner, "C:\\Users\\%s\\AppData\\Local\\Android\\Sdk\\build-tools\\35.0.0\\lib\\apksigner.jar", pUserName);
 		sprintf(szZipAlign, "C:\\Users\\%s\\AppData\\Local\\Android\\Sdk\\build-tools\\35.0.0\\zipalign.exe", pUserName);
 		sprintf(szGradleRes, "C:\\Users\\%s\\.gradle", pUserName);
+	}
+	else
+	{
+		char szAndroidSdkBuildToolPath[] = "build-tools\\35.0.0";
+		LPSTR pUserProfile = getenv("USERPROFILE");
+		LPSTR pAndroidHome = getenv("ANDROID_HOME");
+		
+		if (pAndroidHome)
+		{
+			sprintf(szAPKSigner, "%s\\%s\\lib\\apksigner.jar", pAndroidHome, szAndroidSdkBuildToolPath);
+			sprintf(szZipAlign, "%s\\%s\\zipalign.exe", pAndroidHome, szAndroidSdkBuildToolPath);
+		}
+		if (pUserProfile)
+		{
+			if (!pAndroidHome)
+			{
+				sprintf(szAPKSigner, "%s\\AppData\\Local\\Android\\Sdk\\%s\\lib\\apksigner.jar", pUserProfile, szAndroidSdkBuildToolPath);
+				sprintf(szZipAlign, "%s\\AppData\\Local\\Android\\Sdk\\%s\\zipalign.exe", pUserProfile, szAndroidSdkBuildToolPath);
+			}
+			sprintf(szGradleRes, "%s\\.gradle", pUserProfile);
+		}
+
+		if (GetPathExistsUTF8(szAPKSigner) != 2 || GetPathExistsUTF8(szZipAlign) != 2 || GetPathExistsUTF8(szGradleRes) != 1)
+			Message("Failed to find android sdk related files.");
 	}
 
 	/* old method using absolute paths per developer

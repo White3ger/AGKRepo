@@ -27,6 +27,7 @@ void SetCurrentDirectoryWithCheck( const char* path );
 int RunCmd( int index, const char* cmd, const char* params );
 int GetFileContents( const char* filepath, char **data );
 int CreatePath( const char *path );
+int GetPathExistsUTF8(const char* szPath);
 int CopyFile2( const char *src, const char *dst );
 int CopyFolder( const char *src, const char *dst, int numIgnore=0, const char **szIgnoreExt=0 );
 int UpdateFolder( const char *src, const char *dst, int numIgnore=0, const char **szIgnoreExt=0 );
