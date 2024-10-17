@@ -73,7 +73,7 @@ echo - https://github.com/TheGameCreators/AGKRepo/releases/download/Prerequisite
 echo - https://github.com/TheGameCreators/AGKRepo/releases/download/Prerequisite/AGK_Build-Build.zip
 echo Do you want the script to handle these downloads? (y/n) (default n)
 SET /P continue=
-set "buildfolder=%repoLocation%\AGK_Build2"
+set "buildfolder=%repoLocation%\AGK_Build"
 set "downloadlocation=%USERPROFILE%\Downloads\AGKRepo_requirements"
 if "%continue%" NEQ "y" goto end
 echo Download files to "%downloadlocation%"
