@@ -303,6 +303,67 @@ void InitMissingAgkEnvVars(const char* root_path)
 	}
 }
 
+int CheckVsPathWithFallback(char* vs_devenv)
+{
+	if (GetPathExistsUTF8(vs_devenv) == 2)
+		return 1;
+
+	//fallback using VSAPPIDDIR; works only when executed througth Visual Studio
+	char szVisualStudioTemp[1024];
+	LPSTR pVsFolder = getenv("VSAPPIDDIR");
+	if (pVsFolder)
+	{
+		strcpy(szVisualStudioTemp, pVsFolder);
+		strcat(szVisualStudioTemp, "devenv.exe");
+		if (GetPathExistsUTF8(szVisualStudioTemp) == 2)
+		{
+			strcpy(vs_devenv, szVisualStudioTemp);
+			return 1;
+		}
+	}
+
+	//fallback using vswhere
+	LPSTR pProgramFilesFolder = getenv("ProgramFiles(x86)");
+	if (!pProgramFilesFolder)
+		return -1;
+
+	char szVsWhere[1024]; sprintf(szVsWhere, "%s\\Microsoft Visual Studio\\Installer\\vswhere.exe", pProgramFilesFolder);
+	if (GetPathExistsUTF8(szVsWhere) != 2)
+		return -1;
+
+	char szCommand[1024]; sprintf(szCommand, "\"%s\" -prerelease -latest -property installationPath", szVsWhere);
+
+	char szBuffer[1024];
+	FILE* pPipe;
+	if ((pPipe = _popen(szCommand, "rt")) == NULL)
+		return -1;
+
+	if (!fgets(szBuffer, 1024, pPipe))
+		return -1;
+
+	char* lineEndChar = strchr(szBuffer, '\n');
+	if (lineEndChar != NULL)
+	{
+		int lineEndIndex = (int)(lineEndChar - szBuffer);
+		if (lineEndIndex == strlen(szBuffer) - 1)
+		{
+			szBuffer[lineEndIndex] = '\0';
+		}
+	}
+
+	strcpy(szVisualStudioTemp, szBuffer);	
+	strcat(szVisualStudioTemp, "\\Common7\\IDE\\devenv.exe");
+
+	_pclose(pPipe);
+	if (GetPathExistsUTF8(szVisualStudioTemp) == 2)
+	{
+		strcpy(vs_devenv, szVisualStudioTemp);
+		return 1;
+	}
+
+	return -1;
+}
+
 int main( int argc, char* argv[] )
 {
 	// prepare for relative pathing
@@ -371,28 +432,10 @@ int main( int argc, char* argv[] )
 		printf("!!!Failed to find: %s \n", szJava);
 	}
 
-	if (GetPathExistsUTF8(szVisualStudio) != 2)
+	if (CheckVsPathWithFallback(szVisualStudio) != 1)
 	{
-		bool vsFound = false;
-		LPSTR pVsFolder = getenv("VSAPPIDDIR");
-		if (pVsFolder)
-		{
-			char szVisualStudioTemp[1024];
-			strcpy(szVisualStudioTemp, pVsFolder);
-			strcat(szVisualStudioTemp, "devenv.exe");
-
-			if (GetPathExistsUTF8(szVisualStudioTemp) == 2)
-			{
-				strcpy(szVisualStudio, szVisualStudioTemp);
-				vsFound = true;
-			}
-		}
-
-		if (!vsFound)
-		{
-			bWarnMsgShown = true;
-			Message("!!!Failed to find: devenv.exe (part of Visual Studio)");
-		}
+		bWarnMsgShown = true;
+		Message("!!!Failed to find: devenv.exe (part of Visual Studio)");	
 	}
 
 	// Android Studio files in AppData
