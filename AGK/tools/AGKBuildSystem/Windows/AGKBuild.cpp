@@ -393,33 +393,31 @@ int main( int argc, char* argv[] )
 	// Check jdk path
 	bool bWarnMsgShown = false;
 	char szJdkBasePath[1024] = "C:\\Program Files\\Java\\jdk-17";
-
+	
+	if (GetPathExistsUTF8(szJdkBasePath) != 1)
 	{
+		bWarnMsgShown = true;
+		printf("!!!Failed to find directory: %s \n", szJdkBasePath);
 		LPSTR pJavaHome = getenv("JAVA_HOME");
-		if (GetPathExistsUTF8(szJdkBasePath) != 1)
+		if (pJavaHome)
 		{
-			bWarnMsgShown = true;
-			printf("!!!Failed to find directory: %s \n", szJdkBasePath);
-			if (pJavaHome)
+			printf("---> Do you want to fallback to JAVA_HOME?\n");
+			printf("(ensure that the jdk version is compatible with the version stated in the readme)\n");
+			printf("---> Enter \"y\" to use JAVA_HOME instead of the directory above!\n");
+			char in[256];
+			if (fgets(in, 256, stdin))
 			{
-				printf("---> Do you want to fallback to JAVA_HOME?\n");
-				printf("(ensure that the jdk version is compatible with the version stated in the readme)\n");
-				printf("---> Enter \"y\" to use JAVA_HOME instead of the directory above!\n");
-				char in[256];
-				if (fgets(in, 256, stdin))
+				if (*in == 'y')
 				{
-					if (*in == 'y')
-					{
-						strcpy(szJdkBasePath, pJavaHome);
-						printf("FALLBACK TO JAVA_HOME: %s\n", szJdkBasePath);
-					}
+					strcpy(szJdkBasePath, pJavaHome);
+					printf("FALLBACK TO JAVA_HOME: %s\n", szJdkBasePath);
 				}
 			}
 		}
-		else if (!pJavaHome)
-		{
-			_putenv_s("JAVA_HOME", szJdkBasePath);
-		}
+	}
+	else
+	{
+		_putenv_s("JAVA_HOME", szJdkBasePath);
 	}
 
 	// Installed tools
