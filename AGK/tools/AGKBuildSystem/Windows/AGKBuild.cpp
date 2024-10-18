@@ -485,6 +485,11 @@ int main( int argc, char* argv[] )
 			strcpy(szGradleRes, "");
 			Message("!!!Failed to find android sdk related files.");
 		}
+		else if (!pAndroidHome)
+		{
+			char szAndroidHome[1024]; sprintf(szAndroidHome, "%s\\AppData\\Local\\Android\\Sdk", pUserProfile);
+			_putenv_s("ANDROID_HOME", szAndroidHome);
+		}
 	}
 
 	if (bWarnMsgShown)
