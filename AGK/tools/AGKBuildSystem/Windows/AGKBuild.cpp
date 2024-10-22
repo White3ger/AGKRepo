@@ -331,7 +331,7 @@ int CheckVsPathWithFallback(char* vs_devenv)
 	if (GetPathExistsUTF8(szVsWhere) != 2)
 		return -1;
 
-	char szCommand[1024]; sprintf(szCommand, "\"%s\" -prerelease -latest -property installationPath", szVsWhere);
+	char szCommand[1024]; sprintf(szCommand, "\"%s\" -prerelease -latest -version [17,18) -requires Microsoft.VisualStudio.Workload.NativeDesktop -property installationPath", szVsWhere);
 
 	char szBuffer[1024];
 	FILE* pPipe;
