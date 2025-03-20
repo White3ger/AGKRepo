@@ -1,21 +1,19 @@
 AGK Change Log
 ==============
 
-Build Studio 2024.10.30
+Custom
 -----------------------
-
 - Configurable hotkey for "Save" and "Save All"
 
-Build Studio 2024.08.15
+Build Studio 2025.03.18
 -----------------------
 
-- Update Android API to 35
-- Update AGP to 8.5.2 (Gradle 8.7)
-- Update Google Billing to 7.0.0
-- Update Bundletool to v1.17.0
-- Update App Dependences
-- Updated AppGameKit Player to support new core libraries (Review)
-- Correct minor cosmetic issues with the IDE
+- Added 'Bytecode Hash Interpreter.pdf' featuring helpful tutorial on working with bytecode file
+
+Build Studio 2024.12.18
+-----------------------
+
+- Reinstate API34 to resolve compatibility issues with existing AGK Projects
 
 Build Studio 2024.07.07
 -----------------------
