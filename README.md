@@ -59,7 +59,7 @@ The following instructions require a modern Mac or Mac-Mini:
 
 ## Pre-requisites to compile the Apple binaries
 Ensure the following are installed:
-- XCODE 15.2 or above
+- XCODE 16 (using SDK 18)
 - Install GitHub Desktop for Mac-Mini
 - Select YES to any prompt asking to initialize Git Large File Storage
 
@@ -79,8 +79,25 @@ Ensure the following are installed:
 - You will need an Apple Developer Account to create your certificates and provisions to replace those used by TGC (Apple website has instructions)
 - The AGK IDE for the Mac uses an older AGK Lib file that has been provided and hard copied to the repo for predictable compiling
 
+## Final iOS Export Files
+- If XCode or MacOS have been updated then the following needs to be done. It is good practice to always check just in case something updated without you realising.
+- The build process will have output the iOS Player in the AGKPlayeriOS folder on your desktop. Rename the “AppGameKit Player.ipa” file to .zip and extract it, then rename it back to .ipa.
+- Inside the extracted zip folder go into the Payload folder and right click Show Contents on the AppGameKit Player.app file. In here open the Info.plist file in XCode. It will be in a binary format so only XCode can show you the contents.
+- This file contains some values that we need to copy into our iOS export plist file so that Apple will accept it.
+- In the AGK main repo folder find the “AgkIde/media/data/ios/source/AppGameKit Player.app” file. Right click it and Show Contents, then open the Info.plist file in that folder. Set it up so that both Info.plist files are visible side by side, remembering which one is which.
+- Annoyingly the fields are in different orders in both files, but you are looking for fields with cryptic looking values like “22C65” or “1420” which might make them easier to spot. The full list of fields that need to be copied from the IPA version to the AgkIde version are:
+○ BuildMachineOSBuild
+○ DTPlatformBuild
+○ DTPlatformVersion
+○ DTSDKBuild
+○ DTSDKName
+○ DTXcode
+○ DTXcodeBuild
+- If any of those fields are copied incorrectly then Apple will reject any IPA exported from the Studio IDE.
+- Once the Info.plist file has been modified, save it, close both and the copy the AgkIde version into the build folder, for example mine would be copied to “/Users/myname/AGKStudioBuild/AppGameKitStudio/AppGameKitStudio.app/Contents/Resources/media/data/ios/source/AppGameKit Player.app/Info.plist”. Only copy the plist file, do not overwrite the entire .app folder
+
 ## LINUX INSTRUCTIONS
-The Linux source code is not supported in the AGKREPO at this time. * Linux version of AGK Studio downloaded from Steam, Tier 2 Android contains a bat file to start compiling C++ code, instead of an sh script.
+The Linux source code is not supported in the AGKREPO at this time.
 
 ## How to Implement Tracking Transparency 
 App tracking transparency was implemented a few years ago using the external command functionality. Here's how to use it:
