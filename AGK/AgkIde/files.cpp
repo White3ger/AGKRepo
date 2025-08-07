@@ -2030,7 +2030,7 @@ void processhelp(const char * page,bool readnewpage)
 
 
 		char tmp[100];
-		for (int a = 0; a < 50; a++) {
+		for (int a = 0; a < max_button_count; a++) {
 			//<div id="basicCodeBlock1"
 			sprintf(tmp, "<div id=\"basicCodeBlock%d\"", a);
 			parsedPage.ReplaceStr(tmp, "\\[code]<###");
