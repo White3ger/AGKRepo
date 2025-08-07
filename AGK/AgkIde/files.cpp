@@ -1532,8 +1532,11 @@ uString GetGameGuruFolder()
 #endif
 
 static int button_count;
-char cDropCode[20480];
-static char button_clipboard_text[50][6096]; // Store clipboard text for up to 50 buttons
+static const int button_clipboard_text_size = 8192;
+static const int max_button_count = 30;
+
+char cDropCode[button_clipboard_text_size];
+static char button_clipboard_text[max_button_count][button_clipboard_text_size]; // Store clipboard text for up to 30 buttons
 
 void renderTheText(uString renderText, bool entercodemode, bool bSeperator)
 {
@@ -1556,7 +1559,7 @@ void renderTheText(uString renderText, bool entercodemode, bool bSeperator)
 
 
 		// Store the text for clipboard use, removing trailing whitespace
-		if (button_count < 50) {
+		if (button_count < max_button_count) {
 			const char* srcText = ipText.GetStr();
 			int srcLen = ipText.GetLength();
 
@@ -1566,7 +1569,7 @@ void renderTheText(uString renderText, bool entercodemode, bool bSeperator)
 			}
 
 			// Store the cleaned text for this button
-			int copyLen = (srcLen < 6095) ? srcLen : 6095;
+			int copyLen = (srcLen < (button_clipboard_text_size - 1)) ? srcLen : (button_clipboard_text_size - 1);
 			strncpy(button_clipboard_text[button_count], srcText, copyLen);
 			button_clipboard_text[button_count][copyLen] = '\0';
 		}
@@ -1599,13 +1602,13 @@ void renderTheText(uString renderText, bool entercodemode, bool bSeperator)
 
 		ImGui::PushID(current_button_id);
 		if (ImGui::Button(ICON_MD_CONTENT_COPY)) {
-			if (current_button_id < 50 && strlen(button_clipboard_text[current_button_id]) > 0) {
+			if (current_button_id < max_button_count && strlen(button_clipboard_text[current_button_id]) > 0) {
 				ImGui::SetClipboardText(button_clipboard_text[current_button_id]);
 			}
 		}
 		if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
 		{
-			if (current_button_id < 50 && strlen(button_clipboard_text[current_button_id]) > 0) {
+			if (current_button_id < max_button_count && strlen(button_clipboard_text[current_button_id]) > 0) {
 				strncpy(cDropCode, button_clipboard_text[current_button_id], sizeof(cDropCode) - 1);
 				cDropCode[sizeof(cDropCode) - 1] = '\0';
 				char *ptr = &cDropCode[0];
@@ -1621,7 +1624,7 @@ void renderTheText(uString renderText, bool entercodemode, bool bSeperator)
 		if (ImGui::BeginPopupContextItemAGK(ctmp)) //"project context menu"
 		{
 			if (ImGui::MenuItem("Copy to clipboard")) {
-				if (current_button_id < 50 && strlen(button_clipboard_text[current_button_id]) > 0)
+				if (current_button_id < max_button_count && strlen(button_clipboard_text[current_button_id]) > 0)
 					ImGui::SetClipboardText(button_clipboard_text[current_button_id]);
 				else if (ipText.GetLength() < 4096)
 					ImGui::SetClipboardText(ipText.GetStr());
@@ -2159,7 +2162,7 @@ void processhelp(const char * page,bool readnewpage)
 	bool entercodemode = false;
 	button_count = 0;
 	// Clear clipboard text array for new page
-	for (int i = 0; i < 50; i++) {
+	for (int i = 0; i < max_button_count; i++) {
 		button_clipboard_text[i][0] = '\0';
 	}
 	style_colors = ImGui::GetStyle().Colors;
