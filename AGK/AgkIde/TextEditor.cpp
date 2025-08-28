@@ -933,7 +933,8 @@ void TextEditor::Help( void )
 		}
 	}
 
-	if (strlen(cHelp) < 2)
+	bool bNoCommandHelp = strlen(cHelp) < 2;
+	if (bNoCommandHelp && pref.bBrowserHelp == false)
 		return;
 
 	//Try to find help.
@@ -944,6 +945,14 @@ void TextEditor::Help( void )
 #else
 	getcwd(&curDir[0], MAX_PATH);
 #endif
+
+	if (bNoCommandHelp)
+	{
+		strcat(curDir, "/media/help/home.html");
+
+		agk::OpenBrowser(curDir);
+		return;
+	}
 
 	int index = tolower( char(cHelp[0]) );
 	uString usHelp = cHelp;
