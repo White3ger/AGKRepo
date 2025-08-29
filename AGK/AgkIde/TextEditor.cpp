@@ -942,13 +942,16 @@ void TextEditor::Help( void )
 
 #ifdef AGK_WINDOWS
 	_getcwd(&curDir[0], MAX_PATH);
+#elif defined(AGK_LINUX)
+	strcpy(curDir, "file://");
+	getcwd(&curDir[7], MAX_PATH - 7);
 #else
 	getcwd(&curDir[0], MAX_PATH);
 #endif
 
 	if (bNoCommandHelp)
 	{
-		strcat(curDir, "/media/help/home.html");
+		strcat(curDir, "/media/Help/home.html");
 
 		agk::OpenBrowser(curDir);
 		return;
@@ -973,7 +976,7 @@ void TextEditor::Help( void )
 					}
 					//browser help
 					else {
-						strcat(curDir, "\\");
+						strcat(curDir, "/");
 						strcat(curDir, (char*)sKeyNext->m_cCommandPath.GetStr());
 
 						agk::OpenBrowser(curDir);
@@ -989,7 +992,7 @@ void TextEditor::Help( void )
 
 	if (pref.bBrowserHelp) //failed to find command; use home fallback for browser help
 	{
-		strcat(curDir, "/media/help/home.html");
+		strcat(curDir, "/media/Help/home.html");
 		agk::OpenBrowser(curDir);
 	}
 
