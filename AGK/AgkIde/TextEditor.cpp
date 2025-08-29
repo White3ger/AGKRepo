@@ -934,7 +934,7 @@ void TextEditor::Help( void )
 	}
 
 	bool bNoCommandHelp = strlen(cHelp) < 2;
-	if (bNoCommandHelp && pref.bBrowserHelp == false)
+	if (bNoCommandHelp && !pref.bBrowserHelp)
 		return;
 
 	//Try to find help.
@@ -967,7 +967,7 @@ void TextEditor::Help( void )
 				if (sKeyNext->m_cCommandPath.GetLength() > 0 ) {
 					
 					//built in help
-					if (pref.bBrowserHelp == false) {
+					if (!pref.bBrowserHelp) {
 						processhelp((char*)sKeyNext->m_cCommandPath.GetStr(), true);
 						ImGui::SetWindowFocus(ICON_MD_HELP  " Help");
 					}
@@ -979,12 +979,18 @@ void TextEditor::Help( void )
 						agk::OpenBrowser(curDir);
 					}
 					
-					break;
+					return;
 				}
 			}
 			sKeyNext = sKeyNext->m_pNext;
 		}
 
+	}
+
+	if (pref.bBrowserHelp) //failed to find command; use home fallback for browser help
+	{
+		strcat(curDir, "/media/help/home.html");
+		agk::OpenBrowser(curDir);
 	}
 
 	return;
