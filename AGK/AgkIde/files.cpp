@@ -1555,6 +1555,7 @@ void renderTheText(uString renderText, bool entercodemode, bool bSeperator)
 		ipText.ReplaceStr("&#039;", "\'");
 
 
+
 		// Store the text for clipboard use, removing trailing whitespace
 		if (button_count < 50) {
 			const char* srcText = ipText.GetStr();
@@ -1575,6 +1576,7 @@ void renderTheText(uString renderText, bool entercodemode, bool bSeperator)
 		sprintf(ctmp, "##ecode%d", button_count++);
 		int ti_flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_ReadOnly;
 		ImGui::PushItemWidth(-36);
+
 		float height = ipText.Count('\n');
 		if( height >= 1) {
 			height++;
@@ -1583,6 +1585,7 @@ void renderTheText(uString renderText, bool entercodemode, bool bSeperator)
 			height *= (ImGui::CalcTextSize("#").y+1.5);
 
 			ImGui::InputTextMultiline(ctmp, (char *)ipText.GetStr(), ipText.GetLength() + 1, ImVec2(-36, height), ti_flags);
+
 			cursoroldend = ImGui::GetCursorPos();
 			ImGui::SameLine();
 
@@ -1624,6 +1627,7 @@ void renderTheText(uString renderText, bool entercodemode, bool bSeperator)
 				if (current_button_id < 50 && strlen(button_clipboard_text[current_button_id]) > 0)
 					ImGui::SetClipboardText(button_clipboard_text[current_button_id]);
 				else if (ipText.GetLength() < 4096)
+
 					ImGui::SetClipboardText(ipText.GetStr());
 			}
 			ImGui::EndPopup();
@@ -1894,6 +1898,7 @@ void processhelp(const char * page,bool readnewpage)
 
 		parsedPage = cHelpPage;
 
+
 		uString usCommand = cHelpPagePath;
 		if (usCommand.FindStr("Help/Reference/") > 0 && usCommand.Count('/') == 4)
 		{
@@ -1926,12 +1931,15 @@ void processhelp(const char * page,bool readnewpage)
 			usCommandExample.Append(usCommand/*sKeyNext->m_cCommand*/);
 			//usCommandExample.Append(".htm");
 
+
 			FILE* sourceCommandExample = fopen(usCommandExample.GetStr(), "rb");
 			if (!sourceCommandExample)
 				sourceCommandExample = AGKfopen(usCommandExample.GetStr(), "rb");
 
 			strcpy(cHelpPage, "");
+
 			//strcpy(cHelpPage2, "");
+
 			if (sourceCommandExample) {
 				int size = fread(cHelpPage, 1, MAXHELPFILESIZE, sourceCommandExample);
 
@@ -1941,6 +1949,7 @@ void processhelp(const char * page,bool readnewpage)
 			else {
 				sprintf(cHelpPage, "Cant read %s.", usCommandExample.GetStr());
 			}
+
 
 			usCommandExample = "";
 
@@ -1955,6 +1964,7 @@ void processhelp(const char * page,bool readnewpage)
 			{
 				int nExampleEndIndex = usExampleHtml.FindStr("</pre>", 0, nExampleStartIndex);
 				if (nExampleEndIndex <= 0)
+
 					break;
 
 				if (bFirstExample)
@@ -1962,6 +1972,7 @@ void processhelp(const char * page,bool readnewpage)
 					bFirstExample = false;
 					parsedPage.Append("\\[h2]Examples\\[/h2]");
 				}
+
 
 				nExampleCount++;
 
@@ -1976,6 +1987,7 @@ void processhelp(const char * page,bool readnewpage)
 				parsedPage.Append(cHelpPage);
 				nExampleStartIndex = usExampleHtml.FindStr(exampleStart, 0, nExampleEndIndex);
 			}			
+
 		}
 
 		parsedPage.ReplaceStr("[a href", "\\[a href");
