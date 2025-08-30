@@ -1532,7 +1532,8 @@ uString GetGameGuruFolder()
 #endif
 
 static int button_count;
-char cDropCode[4096];
+char cDropCode[20480];
+static char button_clipboard_text[50][6096]; // Store clipboard text for up to 50 buttons
 
 void renderTheText(uString renderText, bool entercodemode, bool bSeperator)
 {
@@ -1551,20 +1552,40 @@ void renderTheText(uString renderText, bool entercodemode, bool bSeperator)
 		ipText.ReplaceStr("&lt;", "<");
 		ipText.ReplaceStr("&gt;", ">");
 		ipText.ReplaceStr("&amp;", "&");
+		ipText.ReplaceStr("&#039;", "\'");
 
-		change = (char*)ipText.GetStr();
-		if (change[ipText.GetLength() - 1] == '\n')
-			change[ipText.GetLength() - 1] = 0;
 
+
+		// Store the text for clipboard use, removing trailing whitespace
+		if (button_count < 50) {
+			const char* srcText = ipText.GetStr();
+			int srcLen = ipText.GetLength();
+
+			// Remove trailing newlines and carriage returns
+			while (srcLen > 0 && (srcText[srcLen - 1] == '\n' || srcText[srcLen - 1] == '\r')) {
+				srcLen--;
+			}
+
+			// Store the cleaned text for this button
+			int copyLen = (srcLen < 6095) ? srcLen : 6095;
+			strncpy(button_clipboard_text[button_count], srcText, copyLen);
+			button_clipboard_text[button_count][copyLen] = '\0';
+		}
+
+		int current_button_id = button_count;
 		sprintf(ctmp, "##ecode%d", button_count++);
 		int ti_flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_ReadOnly;
 		ImGui::PushItemWidth(-36);
-		float count = ipText.Count('\n');
-		if( count >= 1) {
-			count++;
-			count *= (ImGui::CalcTextSize("#").y+1.5);
 
-			ImGui::InputTextMultiline(ctmp, (char *)ipText.GetStr(), ipText.GetLength() + 1, ImVec2(-36, count > 500 ? 500 : count), ti_flags);
+		float height = ipText.Count('\n');
+		if( height >= 1) {
+			height++;
+			if (height >= 25)
+				height = 25;
+			height *= (ImGui::CalcTextSize("#").y+1.5);
+
+			ImGui::InputTextMultiline(ctmp, (char *)ipText.GetStr(), ipText.GetLength() + 1, ImVec2(-36, height), ti_flags);
+
 			cursoroldend = ImGui::GetCursorPos();
 			ImGui::SameLine();
 
@@ -1579,16 +1600,17 @@ void renderTheText(uString renderText, bool entercodemode, bool bSeperator)
 			ImGui::SameLine();
 		}
 
-		ImGui::PushID(button_count);
+		ImGui::PushID(current_button_id);
 		if (ImGui::Button(ICON_MD_CONTENT_COPY)) {
-			if (change && strlen(change) < 4096) {
-				ImGui::SetClipboardText(change);
+			if (current_button_id < 50 && strlen(button_clipboard_text[current_button_id]) > 0) {
+				ImGui::SetClipboardText(button_clipboard_text[current_button_id]);
 			}
 		}
 		if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
 		{
-			if (change && strlen(change) < 4096) {
-				strcpy(cDropCode, change);
+			if (current_button_id < 50 && strlen(button_clipboard_text[current_button_id]) > 0) {
+				strncpy(cDropCode, button_clipboard_text[current_button_id], sizeof(cDropCode) - 1);
+				cDropCode[sizeof(cDropCode) - 1] = '\0';
 				char *ptr = &cDropCode[0];
 				ImGui::SetDragDropPayload("DND_TEXT_DROP_TARGET", &ptr, sizeof(char*));
 				ImGui::Text("Drop Code");
@@ -1602,7 +1624,10 @@ void renderTheText(uString renderText, bool entercodemode, bool bSeperator)
 		if (ImGui::BeginPopupContextItemAGK(ctmp)) //"project context menu"
 		{
 			if (ImGui::MenuItem("Copy to clipboard")) {
-				if(ipText.GetLength() < 4096)
+				if (current_button_id < 50 && strlen(button_clipboard_text[current_button_id]) > 0)
+					ImGui::SetClipboardText(button_clipboard_text[current_button_id]);
+				else if (ipText.GetLength() < 4096)
+
 					ImGui::SetClipboardText(ipText.GetStr());
 			}
 			ImGui::EndPopup();
@@ -1873,19 +1898,48 @@ void processhelp(const char * page,bool readnewpage)
 
 		parsedPage = cHelpPage;
 
-		if (sKeyNext != NULL && sKeyNext->m_cCommand != "\0")
+
+		uString usCommand = cHelpPagePath;
+		if (usCommand.FindStr("Help/Reference/") > 0 && usCommand.Count('/') == 4)
+		{
+			uString tmp = "";
+			int nLastSep = usCommand.RevFind('/');
+			if (nLastSep > 0)
+			{
+				usCommand.SubString(tmp, nLastSep + 1);
+			}
+
+			if (tmp.GetLength() > 0 && tmp.RevFindStr(".htm") > 0)
+			{
+				usCommand = tmp;
+			}
+			else
+			{
+				usCommand = "";
+			}
+		}
+		else
+		{
+			usCommand = "";
+		}
+
+		if (usCommand.GetLength() > 0)
+		/*if (sKeyNext != NULL && sKeyNext->m_cCommand != "\0" && usFullHelpPath.GetLength() > sKeyNext->m_cCommandPath.GetLength() && usFullHelpPath.FindStr(sKeyNext->m_cCommandPath) > 0)*/
 		{
 			uString usCommandExample = cHelpFolder;
 			usCommandExample.Append("media/Help/command_examples/tier1/");
-			usCommandExample.Append(sKeyNext->m_cCommand);
-			usCommandExample.Append(".htm");
+			usCommandExample.Append(usCommand/*sKeyNext->m_cCommand*/);
+			//usCommandExample.Append(".htm");
+
 
 			FILE* sourceCommandExample = fopen(usCommandExample.GetStr(), "rb");
 			if (!sourceCommandExample)
 				sourceCommandExample = AGKfopen(usCommandExample.GetStr(), "rb");
 
 			strcpy(cHelpPage, "");
-			strcpy(cHelpPage2, "");
+
+			//strcpy(cHelpPage2, "");
+
 			if (sourceCommandExample) {
 				int size = fread(cHelpPage, 1, MAXHELPFILESIZE, sourceCommandExample);
 
@@ -1896,14 +1950,21 @@ void processhelp(const char * page,bool readnewpage)
 				sprintf(cHelpPage, "Cant read %s.", usCommandExample.GetStr());
 			}
 
-			uString test = cHelpPage;
+
+			usCommandExample = "";
+
+			uString usExampleHtml = cHelpPage;
 
 			bool bFirstExample = true;
-			int starttest = test.FindStr("<pre class=\"prettyprint  lang-agk \" style=\"border: 1px solid black; margin:14px; padding: 4px; font-size: 14px;background-color:#ffffff\">");
-			while (starttest >= 0)
+			const char exampleStart[] = "<pre class=\"prettyprint  lang-agk \" style=\"border: 1px solid black; margin:14px; padding: 4px; font-size: 14px;background-color:#ffffff\">";
+			int nExampleStartLength = strlen(exampleStart);
+			int nExampleStartIndex = usExampleHtml.FindStr(exampleStart);
+			int nExampleCount = 0;
+			while (nExampleStartIndex >= 0)
 			{
-				int endtest = test.FindStr("</pre>", 0, starttest);
-				if (endtest <= 0)
+				int nExampleEndIndex = usExampleHtml.FindStr("</pre>", 0, nExampleStartIndex);
+				if (nExampleEndIndex <= 0)
+
 					break;
 
 				if (bFirstExample)
@@ -1912,23 +1973,21 @@ void processhelp(const char * page,bool readnewpage)
 					parsedPage.Append("\\[h2]Examples\\[/h2]");
 				}
 
-				uString test2;
-				test.SubString(test2, starttest + 137, endtest - (starttest + 137));
-				test2.Prepend("\\[code]\\[p]<pre>");
-				test2.Append("</pre>\\[/p]</div>");
-				strcpy(cHelpPage, test2.GetStr());
+
+				nExampleCount++;
+
+				char tmp[100];
+				sprintf(tmp, "\\[h3]%s %d\\[/h3]", "Example", nExampleCount);
+				parsedPage.Append(tmp);
+				uString usExample;
+				usExampleHtml.SubString(usExample, nExampleStartIndex + nExampleStartLength, nExampleEndIndex - (nExampleStartIndex + nExampleStartLength));
+				usExample.Prepend("\\[code]\\[p]<pre>");
+				usExample.Append("</pre>\\[/p]</div>");
+				strcpy(cHelpPage, usExample.GetStr());
 				parsedPage.Append(cHelpPage);
-				starttest = test.FindStr("<pre class=\"prettyprint  lang-agk \" style=\"border: 1px solid black; margin:14px; padding: 4px; font-size: 14px;background-color:#ffffff\">", 0, starttest + 1);
-			}
+				nExampleStartIndex = usExampleHtml.FindStr(exampleStart, 0, nExampleEndIndex);
+			}			
 
-			/*find = strstr(cHelpPage, "<div class=\"comment\"");
-			if (find) {
-				strcpy(cHelpPage2, find);
-			}*/
-
-			//strcpy(cHelpPage, cHelpPage2);
-
-			
 		}
 
 		parsedPage.ReplaceStr("[a href", "\\[a href");
@@ -2111,6 +2170,10 @@ void processhelp(const char * page,bool readnewpage)
 	bool userawdata = false;
 	bool entercodemode = false;
 	button_count = 0;
+	// Clear clipboard text array for new page
+	for (int i = 0; i < 50; i++) {
+		button_clipboard_text[i][0] = '\0';
+	}
 	style_colors = ImGui::GetStyle().Colors;
 	size = strlen(cHelpPagePath);
 	char *nav,*navend;

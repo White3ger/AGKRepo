@@ -97,3 +97,4 @@ AGK/apps/interpreter_ios_noads/Build
 AGK/apps/interpreter_mac/build
 AGK/Broadcaster/AGKBroadcaster/build
 AGK/CompilerNew/build
+AGK/out/build

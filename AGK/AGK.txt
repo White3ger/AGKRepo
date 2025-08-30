@@ -1,6 +1,10 @@
 AGK Change Log
 ==============
 
+Custom
+-----------------------
+- Configurable hotkey for "Save" and "Save All"
+
 Build Studio 2025.03.18
 -----------------------
 

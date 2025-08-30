@@ -267,6 +267,103 @@ int ExtractFolder( mz_zip_archive* zip_archive, const char* folder, const char* 
 	return 1;
 }
 
+void InitMissingAgkEnvVars(const char* root_path)
+{
+	char szAGKBuildDir[1024];
+	sprintf_s(szAGKBuildDir, "%s\\AGK_Build", root_path);
+	if (!GetPathExistsUTF8(szAGKBuildDir))
+		return;
+	
+	char szEnvTemp[1024];
+	strcpy(szEnvTemp, "");
+	//Set some required environment vars, if not exists (for this process and its childs only)
+	if (!getenv("NDK_PATH"))
+	{
+		sprintf(szEnvTemp, "%s\\External\\android-ndk-r20b", szAGKBuildDir);
+		_putenv_s("NDK_PATH", szEnvTemp);
+		strcpy(szEnvTemp, "");
+	}
+	if (!getenv("STEAMWORKS_PATH"))
+	{
+		sprintf(szEnvTemp, "%s\\External\\Steamworks", szAGKBuildDir);
+		_putenv_s("STEAMWORKS_PATH", szEnvTemp);
+		strcpy(szEnvTemp, "");
+	}
+	if (!getenv("VULKAN_SDK_PATH"))
+	{
+		sprintf(szEnvTemp, "%s\\External", szAGKBuildDir);
+		_putenv_s("VULKAN_SDK_PATH", szEnvTemp);
+		strcpy(szEnvTemp, "");
+	}
+	if (!getenv("AGK_STUDIO_PATH"))
+	{
+		sprintf(szEnvTemp, "%s\\AGK", root_path);
+		_putenv_s("AGK_STUDIO_PATH", szEnvTemp);
+		strcpy(szEnvTemp, "");
+	}
+}
+
+int CheckVsPathWithFallback(char* vs_devenv)
+{
+	if (GetPathExistsUTF8(vs_devenv) == 2)
+		return 1;
+
+	//fallback using VSAPPIDDIR; works only when executed througth Visual Studio
+	char szVisualStudioTemp[1024];
+	LPSTR pVsFolder = getenv("VSAPPIDDIR");
+	if (pVsFolder)
+	{
+		strcpy(szVisualStudioTemp, pVsFolder);
+		strcat(szVisualStudioTemp, "devenv.exe");
+		if (GetPathExistsUTF8(szVisualStudioTemp) == 2)
+		{
+			strcpy(vs_devenv, szVisualStudioTemp);
+			return 1;
+		}
+	}
+
+	//fallback using vswhere
+	LPSTR pProgramFilesFolder = getenv("ProgramFiles(x86)");
+	if (!pProgramFilesFolder)
+		return -1;
+
+	char szVsWhere[1024]; sprintf(szVsWhere, "%s\\Microsoft Visual Studio\\Installer\\vswhere.exe", pProgramFilesFolder);
+	if (GetPathExistsUTF8(szVsWhere) != 2)
+		return -1;
+
+	char szCommand[1024]; sprintf(szCommand, "\"%s\" -prerelease -latest -version [17,18) -requires Microsoft.VisualStudio.Workload.NativeDesktop -property installationPath", szVsWhere);
+
+	char szBuffer[1024];
+	FILE* pPipe;
+	if ((pPipe = _popen(szCommand, "rt")) == NULL)
+		return -1;
+
+	if (!fgets(szBuffer, 1024, pPipe))
+		return -1;
+
+	char* lineEndChar = strchr(szBuffer, '\n');
+	if (lineEndChar != NULL)
+	{
+		int lineEndIndex = (int)(lineEndChar - szBuffer);
+		if (lineEndIndex == strlen(szBuffer) - 1)
+		{
+			szBuffer[lineEndIndex] = '\0';
+		}
+	}
+
+	strcpy(szVisualStudioTemp, szBuffer);	
+	strcat(szVisualStudioTemp, "\\Common7\\IDE\\devenv.exe");
+
+	_pclose(pPipe);
+	if (GetPathExistsUTF8(szVisualStudioTemp) == 2)
+	{
+		strcpy(vs_devenv, szVisualStudioTemp);
+		return 1;
+	}
+
+	return -1;
+}
+
 int main( int argc, char* argv[] )
 {
 	// prepare for relative pathing
@@ -282,6 +379,8 @@ int main( int argc, char* argv[] )
 	//MessageBoxA(NULL, szAGKTrunkDir, szAGKTrunkDir, MB_OK);
 	SetCurrentDirectoryWithCheck(szAGKTrunkDir);// ("D:\\AGK\\"); // AGKTrunk
 
+	InitMissingAgkEnvVars(szRepoRoot);
+
 	// Repo folders
 	char szDstFolderWin[1024]; sprintf(szDstFolderWin, "%s\\AGK_Build\\Builds\\Studio\\AGKStudioWindows", szRepoRoot);
 	char szDstFolderMac[1024]; sprintf(szDstFolderMac, "%s\\AGK_Build\\Builds\\Studio\\AGKStudioMac\\AGK", szRepoRoot);
@@ -291,22 +390,110 @@ int main( int argc, char* argv[] )
 	char szKeyStore[1024]; sprintf(szKeyStore, "%s\\AGK_Build\\Signing\\keystore.keystore", szRepoRoot);
 	char szTemp[1024]; sprintf(szTemp, "%s\\AGK_Build\\Temp", szRepoRoot);
 
+	// Check jdk path
+	bool bWarnMsgShown = false;
+	char szJdkBasePath[1024] = "C:\\Program Files\\Java\\jdk-17";
+	
+	if (GetPathExistsUTF8(szJdkBasePath) != 1)
+	{
+		bWarnMsgShown = true;
+		printf("!!!Failed to find directory: %s \n", szJdkBasePath);
+		LPSTR pJavaHome = getenv("JAVA_HOME");
+		if (pJavaHome)
+		{
+			printf("---> Do you want to fallback to JAVA_HOME?\n");
+			printf("(ensure that the jdk version is compatible with the version stated in the readme)\n");
+			printf("---> Enter \"y\" to use JAVA_HOME instead of the directory above!\n");
+			char in[256];
+			if (fgets(in, 256, stdin))
+			{
+				if (*in == 'y')
+				{
+					strcpy(szJdkBasePath, pJavaHome);
+					printf("FALLBACK TO JAVA_HOME: %s\n", szJdkBasePath);
+				}
+			}
+		}
+	}
+	else
+	{
+		_putenv_s("JAVA_HOME", szJdkBasePath);
+	}
+
 	// Installed tools
-	char szJarSigner[1024]; sprintf(szJarSigner, "C:\\Program Files\\Java\\jdk-17\\bin\\jarsigner.exe");// C:\\Program Files\\Android\\Android Studio\\jre\\bin\\jarsigner.exe");
+	char szJarSigner[1024]; sprintf(szJarSigner, "%s\\bin\\jarsigner.exe", szJdkBasePath);// C:\\Program Files\\Android\\Android Studio\\jre\\bin\\jarsigner.exe");
 	char szVisualStudio[1024]; sprintf(szVisualStudio, "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\devenv.exe");
-	char szJava[1024]; sprintf(szJava, "C:\\Program Files\\Java\\jdk-17\\bin\\java.exe");
+	char szJava[1024]; sprintf(szJava, "%s\\bin\\java.exe", szJdkBasePath);
+
+	if (GetPathExistsUTF8(szJarSigner) != 2)
+	{
+		bWarnMsgShown = true;
+		printf("!!!Failed to find: %s \n", szJarSigner);
+	}
+
+	if (GetPathExistsUTF8(szJava) != 2)
+	{
+		bWarnMsgShown = true;
+		printf("!!!Failed to find: %s \n", szJava);
+	}
+
+	if (CheckVsPathWithFallback(szVisualStudio) != 1)
+	{
+		bWarnMsgShown = true;
+		Message("!!!Failed to find: devenv.exe (part of Visual Studio)");	
+	}
 
 	// Android Studio files in AppData
 	char szAPKSigner[1024]; strcpy(szAPKSigner, "");
 	char szZipAlign[1024]; strcpy(szZipAlign, "");
 	char szGradleRes[1024];  strcpy(szGradleRes, "");
+
+	static const char szAndroidSdkBuildToolPart[] = "build-tools\\34.0.0";
 	LPSTR pUserName = getenv("USERNAMEFORAGK");
 	if (pUserName)
 	{
-		sprintf(szAPKSigner, "C:\\Users\\%s\\AppData\\Local\\Android\\Sdk\\build-tools\\34.0.0\\lib\\apksigner.jar", pUserName);
-		sprintf(szZipAlign, "C:\\Users\\%s\\AppData\\Local\\Android\\Sdk\\build-tools\\34.0.0\\zipalign.exe", pUserName);
+		sprintf(szAPKSigner, "C:\\Users\\%s\\AppData\\Local\\Android\\Sdk\\%s\\lib\\apksigner.jar", pUserName, szAndroidSdkBuildToolPart);
+		sprintf(szZipAlign, "C:\\Users\\%s\\AppData\\Local\\Android\\Sdk\\%s\\zipalign.exe", pUserName, szAndroidSdkBuildToolPart);
 		sprintf(szGradleRes, "C:\\Users\\%s\\.gradle", pUserName);
 	}
+	else
+	{
+		//Fallback for missing USERNAMEFORAGK env
+		LPSTR pUserProfile = getenv("USERPROFILE");
+		LPSTR pAndroidHome = getenv("ANDROID_HOME");
+
+		if (pAndroidHome)
+		{
+			sprintf(szAPKSigner, "%s\\%s\\lib\\apksigner.jar", pAndroidHome, szAndroidSdkBuildToolPart);
+			sprintf(szZipAlign, "%s\\%s\\zipalign.exe", pAndroidHome, szAndroidSdkBuildToolPart);
+		}
+		if (pUserProfile)
+		{
+			if (!pAndroidHome)
+			{
+				sprintf(szAPKSigner, "%s\\AppData\\Local\\Android\\Sdk\\%s\\lib\\apksigner.jar", pUserProfile, szAndroidSdkBuildToolPart);
+				sprintf(szZipAlign, "%s\\AppData\\Local\\Android\\Sdk\\%s\\zipalign.exe", pUserProfile, szAndroidSdkBuildToolPart);
+			}
+			sprintf(szGradleRes, "%s\\.gradle", pUserProfile);
+		}
+
+		if (GetPathExistsUTF8(szAPKSigner) != 2 || GetPathExistsUTF8(szZipAlign) != 2 || GetPathExistsUTF8(szGradleRes) != 1)
+		{
+			bWarnMsgShown = true;
+			strcpy(szAPKSigner, "");
+			strcpy(szZipAlign, "");
+			strcpy(szGradleRes, "");
+			Message("!!!Failed to find android sdk related files.");
+		}
+		else if (!pAndroidHome)
+		{
+			char szAndroidHome[1024]; sprintf(szAndroidHome, "%s\\AppData\\Local\\Android\\Sdk", pUserProfile);
+			_putenv_s("ANDROID_HOME", szAndroidHome);
+		}
+	}
+
+	if (bWarnMsgShown)
+		Message("==============================================================================");
 
 	/* old method using absolute paths per developer
 	// set some path variables
