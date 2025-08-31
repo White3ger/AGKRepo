@@ -55,14 +55,7 @@ AGK_Build/Shared/WindowsReceive/Studio/Android/lib/armeabi-v7a/libpruneau.so
 AGK/apps/interpreter_android_google/AGKPlayer2/src/main/log.txt
 AGK/libprojects/android_assimp/log.txt
 AGK_Build/Signing/keystore.keystore
-AGK/AGK Help Generator
-AGK/AGK Help Generator/Generator/Generator.exe
-AGK/AGK Help Generator/Generator/Release64
-AGK/AGK Help Generator/Reference/Reference.exe
-AGK/AGK Help Generator/Reference/Release64
 AGK/apps/interpreter_android_google/AGKPlayer2/src/main/log.txt
-AGK/AGK Help Generator/Generator/Generator.exe
-AGK/AGK Help Generator/Reference/Reference.exe
 AGK/apps/interpreter_android_google/AGKPlayer2/src/main/log.txt
 AGK/apps/interpreter_android_ouya/AGKPlayer2/release/AGKPlayer2-release.apk
 AGK_Build/Signing/password.txt
@@ -97,3 +90,17 @@ AGK/apps/interpreter_ios_noads/Build
 AGK/apps/interpreter_mac/build
 AGK/Broadcaster/AGKBroadcaster/build
 AGK/CompilerNew/build
+AGK/apps/interpreter_android_google/AGKPlayer2/src/main/jniLibs/arm64-v8a/libandroid_player.so
+AGK/apps/interpreter_android_google/AGKPlayer2/src/main/jniLibs/armeabi-v7a/libandroid_player.so
+AGK/apps/interpreter_android_amazon/AGKPlayer2/src/main/jniLibs
+AGK/apps/interpreter_android_ouya/AGKPlayer2/src/main/jniLibs
+AGK/apps/interpreter_android_google_noads/AGKPlayer2/src/main/jniLibs/arm64-v8a/libandroid_player.so
+AGK/apps/interpreter_android_google_noads/AGKPlayer2/src/main/jniLibs/armeabi-v7a/libandroid_player.so
+AGK/apps/interpreter_android_google_native/AGKPlayer2/src/main/jniLibs
+AGK/platform/android/jni
+#AGK/AGK Help Generator
+AGK/AGK Help Generator/Generator/Generator.exe
+AGK/AGK Help Generator/Generator/Release64
+AGK/AGK Help Generator/Reference/Reference.exe
+AGK/AGK Help Generator/Reference/Release64
+AGK/AGK Help Generator/AGK Txt/Reference
