@@ -9503,7 +9503,16 @@ bool vTextEditor(char *winname, TextEditor * m_editor, char * cName, char * cPat
 					if (g.NavWindow == agk_window) {
 
 						if (m_ActiveEditor != m_editor)
-							m_editor->mScrollToCursor = true;
+						{
+							if(!pref.bTabChangeSetScrollPosToCursor) 
+							{
+								m_editor->mTabChanged = true;
+							}
+							else 
+							{
+								m_editor->mScrollToCursor = true;
+							}
+						}
 						m_ActiveEditor = m_editor;
 						if (m_pCurFile && m_pCurFile->m_scene && m_pCurFile->m_scene->m_pCurrentScene)
 							m_ActiveScene = m_pCurFile->m_scene->m_pCurrentScene;

@@ -357,6 +357,11 @@ void ProcessPreferences(void) {
 			if (ImGui::IsItemHovered()) ImGui::SetTooltip("Use browser help instead of the built in help");
 #endif
 
+			bTmp = pref.bTabChangeSetScrollPosToCursor;
+			ImGui::Checkbox("Reset scroll position on tab change", &bTmp);
+			pref.bTabChangeSetScrollPosToCursor = bTmp;
+			if (ImGui::IsItemHovered()) ImGui::SetTooltip("Reset scroll position to cursor position on tab change");
+
 			ImGui::Separator();
 
 			ImGui::SliderInt("Scene: Float Decimal Precision", &pref.iSceneLowFloatPrecision, 0, 8);

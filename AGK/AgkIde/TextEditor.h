@@ -196,6 +196,7 @@ public:
 	};
 
 	bool mScrollToCursor;
+	bool mTabChanged;
 	int mScrollToCursorAddLines = 0;
 	bool checkingcomments = false;
 	int maxchecklines = 0;

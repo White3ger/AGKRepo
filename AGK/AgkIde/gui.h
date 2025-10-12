@@ -419,6 +419,7 @@ struct Preferences
 	bool bSaveAllFilesAlt = false;
 	int iSaveAllFilesKey = 83;
 	char cSaveAllFilesText[32];
+	bool bTabChangeSetScrollPosToCursor = true;
 };
 
 #endif

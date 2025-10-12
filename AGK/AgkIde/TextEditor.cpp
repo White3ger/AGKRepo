@@ -4611,13 +4611,14 @@ void TextEditor::Render(const char* aTitle, const ImVec2& aSize, bool aBorder, b
 	}
 
 
-	if (mScrollToCursor)
+	if (mScrollToCursor || mTabChanged)
 	{
 		//Initialised yet ?
 		if (ImGui::GetWindowHeight() > 28) { //Default 4 ?
-			EnsureCursorVisible();
+			if(mScrollToCursor) EnsureCursorVisible();
 			if(!bSearchActive) ImGui::SetWindowFocus();
 			mScrollToCursor = false;
+			mTabChanged = false;
 		}
 	}
 
